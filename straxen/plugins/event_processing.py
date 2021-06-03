@@ -350,7 +350,7 @@ class EventPositions(strax.Plugin):
 
     depends_on = ('event_basics', )
     
-    __version__ = '0.1.3'
+    __version__ = '0.1.4'
 
     dtype = [
         ('x', np.float32,
@@ -358,11 +358,13 @@ class EventPositions(strax.Plugin):
         ('y', np.float32,
          'Interaction y-position, field-distortion corrected (cm)'),
         ('z', np.float32,
-         'Interaction z-position, field-distortion corrected (cm)'),
+         'Interaction z-position as in z_naive (cm)'),
         ('r', np.float32,
          'Interaction radial position, field-distortion corrected (cm)'),
         ('z_naive', np.float32,
          'Interaction z-position using mean drift velocity only (cm)'),
+        ('z_field_distortion_correction', np.float32,
+         'Interaction z-position, field-distortion corrected (cm)'),
         ('r_naive', np.float32,
          'Interaction r-position using observed S2 positions directly (cm)'),
         ('r_field_distortion_correction', np.float32,
@@ -410,6 +412,8 @@ class EventPositions(strax.Plugin):
         # z correction due to longer drift time for distortion
         # (geometrical reasoning not valid if |delta_r| > |z_obs|,
         #  as cathetus cannot be longer than hypothenuse)
+        # TO BE FIXED: z correction introduces a distortion at the
+        #              top of the TPC, using z naive until fixed
         with np.errstate(invalid='ignore'):
             z_cor = -(z_obs ** 2 - delta_r ** 2) ** 0.5
             invalid = np.abs(z_obs) < np.abs(delta_r)
@@ -422,7 +426,8 @@ class EventPositions(strax.Plugin):
                        'r_field_distortion_correction': delta_r,
                        'theta': np.arctan2(orig_pos[:, 1], orig_pos[:, 0]),
                        'z_naive': z_obs,
-                       'z': z_cor})
+                       'z_field_distortion_correction': z_cor,
+                       'z': z_obs})
 
         return result
 
